@@ -24,7 +24,9 @@ class Source(Base):
 
         try:
             self.__source_kitten = SourceKitten(
-                path=vim.vars['deoplete#sources#swift#source_kitten_binary']
+                path=vim.vars['deoplete#sources#swift#source_kitten_binary'],
+                sdk = vim.vars['deoplete#sources#swift#sdk'], 
+                target = vim.vars['deoplete#sources#swift#target']
             )
         except SourceKittenNotFound as exception:
             error(vim, '{} binary not found'.format(exception.path))
@@ -75,8 +77,10 @@ class Source(Base):
 
 
 class SourceKitten(object):
-    def __init__(self, path=None):
+    def __init__(self, path=None, sdk=None, target=None):
         self.__command = SourceKitten.validate_command(path)
+        self.sdk = sdk
+        self.target = target
 
     def complete(self, path, offset):
         command_complete = [
@@ -85,6 +89,15 @@ class SourceKitten(object):
             '--file', path,
             '--offset', str(offset)
         ]
+
+        if self.sdk or self.target:
+            command_complete += ['--']
+
+        if self.target:
+            command_complete += ['-target', self.target]
+
+        if self.sdk:
+            command_complete += ['-target', self.target]
 
         stdout_data, stderr_data = SourceKitten.__execute(command_complete)
         if stderr_data != b'':
